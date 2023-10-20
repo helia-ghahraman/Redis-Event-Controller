@@ -1,44 +1,36 @@
+#include <cpp_redis/cpp_redis>
 #include <iostream>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include <sw/redis++/redis++.h>
 
 bool new_message_received = false;
 std::string received_message;
 std::mutex new_message_mutex;
 std::condition_variable new_message_cv;
 
-void worker_thread() {
-    std::string channel = "chatroom";
+void worker_thread(cpp_redis::subscriber& sub) {
+    sub.subscribe("chatroom", [](const std::string& chan, const std::string& msg) {
+        std::unique_lock<std::mutex> lock(new_message_mutex);
+        received_message = msg;
+        new_message_received = true;
+        lock.unlock();
+        new_message_cv.notify_one();
+    });
 
-    sw::redis::ConnectionOptions connection_options;
-    connection_options.host = "127.0.0.1";
-    connection_options.port = 6379;
-
-    try {
-        auto redis1 = sw::redis::Redis(connection_options);
-        auto sub = redis1.subscriber();
-
-        sub.subscribe(channel);
-
-//        , [&channel](const std::string& chan, const std::string& msg) {
-//            if (chan == channel) {
-//                std::unique_lock<std::mutex> lock(new_message_mutex);
-//                received_message = msg;
-//                new_message_received = true;
-//                lock.unlock();
-//                new_message_cv.notify_one();
-//            }
-//        }
-        sub.consume();
-    } catch (const std::exception& e) {
-        std::cerr << "Exception in worker thread: " << e.what() << std::endl;
-    }
+    sub.commit();
 }
 
 int main() {
-    std::thread worker(worker_thread);
+    cpp_redis::subscriber sub;
+
+    sub.connect("127.0.0.1", 6379, [](const std::string& host, std::size_t port, cpp_redis::connect_state status) {
+        if (status == cpp_redis::connect_state::dropped) {
+            std::cerr << "Subscriber disconnected from " << host << ":" << port << std::endl;
+        }
+    });
+
+    std::thread worker(worker_thread, std::ref(sub));
 
     while (true) {
         std::unique_lock<std::mutex> lock(new_message_mutex);
