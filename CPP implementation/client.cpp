@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
         int sleep_duration = dis(gen); // Generate a random sleep duration
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_duration));
     }
-
-
+    
+    client.disconnect();
 
 }
