@@ -1,29 +1,33 @@
+#cmake_minimum_required(VERSION 3.1)
+#project(RedisPubSubExample)
+#
+#set(CMAKE_CXX_STANDARD 11)
+#
+#find_library(CPP_REDIS_LIBRARY cpp_redis PATHS "/home/helia/cpp_redis/build/lib")
+#
+#
+#include_directories(/home/helia/cpp_redis/includes)
+#
+#add_executable(server server.cpp)
+#target_link_libraries(server PRIVATE ${CPP_REDIS_LIBRARY})
+#
+#add_executable(client client.cpp)
+#target_link_libraries(client PRIVATE ${CPP_REDIS_LIBRARY})
 
-cmake_minimum_required( VERSION 3.1 )
-project( XBOX_manager )
 
-set( CMAKE_CXX_STANDARD 17 )
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread" )
+cmake_minimum_required(VERSION 3.1)
+project(RedisPubSubExample)
 
+set(CMAKE_CXX_STANDARD 11)
 
-add_executable( client client.cpp )
-add_executable( server server.cpp )
+# Assuming cpp_redis library is a submodule or available as a package
+find_library(CPP_REDIS_LIBRARY cpp_redis)
 
-# ----- start adding hiredis -----
-find_path( HIREDIS_HEADER hiredis )
-target_include_directories( server PUBLIC ${HIREDIS_HEADER} )
-target_include_directories( client PUBLIC ${HIREDIS_HEADER} )
-find_library( HIREDIS_LIB hiredis )
-target_link_libraries( server ${HIREDIS_LIB} )
-target_link_libraries( client ${HIREDIS_LIB} )
-# ----- end adding hiredis -----
+# Include directories relative to the project's root directory
+include_directories(${CMAKE_SOURCE_DIR}/cpp_redis/includes)
 
-# ----- start adding redisHelper-plus-plus -----
-find_path( REDIS_PLUS_PLUS_HEADER sw )
-target_include_directories( server PUBLIC ${REDIS_PLUS_PLUS_HEADER} )
-target_include_directories( client PUBLIC ${REDIS_PLUS_PLUS_HEADER} )
+add_executable(server server.cpp)
+target_link_libraries(server PRIVATE ${CPP_REDIS_LIBRARY})
 
-find_library( REDIS_PLUS_PLUS_LIB redis++ )
-target_link_libraries( server ${REDIS_PLUS_PLUS_LIB} )
-target_link_libraries( client ${REDIS_PLUS_PLUS_LIB} )
-# ----- end adding redisHelper-plus-plus -----
+add_executable(client client.cpp)
+target_link_libraries(client PRIVATE ${CPP_REDIS_LIBRARY})
